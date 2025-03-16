@@ -16,6 +16,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from catboost import CatBoostRegressor
 import xgboost as xgb
+from datetime import datetime
 from sklearn.model_selection import GridSearchCV
 
 
@@ -87,11 +88,7 @@ data, y = data.drop(["price"], axis=1), data["price"]
 #data = pd.DataFrame(data=data_transform, columns=data.columns)
 
 
-
-
-
-
-dtest_data = pd.read_csv("test.csv")
+test_data = pd.read_csv("test.csv")
 tt = test_data.copy()
 
 test_data["Triplet_letters"] = 0
