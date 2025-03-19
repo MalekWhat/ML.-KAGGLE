@@ -95,6 +95,20 @@ data, y = data.drop(["price"], axis=1), data["price"]
 
 xtrain, xtest, ytrain, ytest = train_test_split(data, y, test_size = 0.2, shuffle=True)
 
+dtree = DecisionTreeRegressor()
+
+param_grid3 = {
+    "criterion":["squared_error", "absolute_error"],
+    "max_depth":[6, 12, 20],
+    "min_samples_split":[10, 15, 25],
+    "min_samples_leaf":[1, 2, 3],
+}
+grid_search3 = GridSearchCV(dtree, param_grid3, cv=3)
+grid_search3.fit(xtrain, ytrain)
+print("Best parametrs of Decision Tree", grid_search3.best_params_)
+best_Dtree = grid_search3.best_estimator_
+print(mean_absolute_percentage_error(ytest, best_Dtree.predict(xtest)))
+
 RFS = RandomForestRegressor()
 
 param_grid2 = {
