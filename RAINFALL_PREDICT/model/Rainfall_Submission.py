@@ -56,8 +56,9 @@ data, y = data.drop(["rainfall", "day", "id", "mintemp", "maxtemp"], axis=1), da
 norm = StandardScaler()
 data2 = norm.fit_transform(data)
 data = pd.DataFrame(data=data2, columns=data.columns)
-svc = SVC(probability=True)
-svc.fit(data, y)
+
+RFS = RandomForestClassifier(n_estimators=25, min_samples_leaf=1, min_samples_split=50, max_depth=5)
+RFS.fit(data, y)
 
 test_data = pd.read_csv("data/test.csv")
 test_data['season'] = test_data['day'] % 365
@@ -87,5 +88,5 @@ test_data = pd.DataFrame(data=norm.transform(test_data), columns=test_data.colum
 test_data.fillna(0, inplace=True)
 
 sub = pd.read_csv("data/sample_submission.csv")
-sub["rainfall"] = 1 - svc.predict_proba(test_data)
+sub["rainfall"] = 1 - RFS.predict_proba(test_data)
 sub.to_csv("answer.csv", index=False)
