@@ -19,8 +19,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 import seaborn as sns
 import matplotlib.pyplot as plt
-
-data = pd.read_csv("data/train.csv")
+from sklearn.model_selection import GridSearchCV
+data = pd.read_csv("/home/malek1t/ML.-KAGGLE/RAINFALL_PREDICT/data/train.csv")
 
 i,j = 0, 0
 fig, ax = plt.subplots(4, 3, figsize=(18 , 11))
@@ -111,8 +111,20 @@ Dtree = DecisionTreeClassifier()
 Dtree.fit(xtrain, ytrain)
 print(f"Decision Tree Regressor with default, roc_auc_score = {roc_auc_score(ytest, Dtree.predict(xtest))}", "\n")
 
-for i in range(1, 21):
-    rfc = RandomForestClassifier(n_estimators=i)
-    rfc.fit(xtrain, ytrain)
-    print(f"Trees in RFS = {i}, roc_auc_score = {roc_auc_score(ytest, rfc.predict(xtest))}")
+RFS = RandomForestClassifier()
+
+params = {
+    "n_estimators":[5, 10, 15, 20, 25, 35, 45],
+    "max_depth":[5, 10, 20, 30],
+    "min_samples_leaf": [1, 2],
+    "min_samples_split":[30, 40, 50, 60]
+}
+
+grid_search = GridSearchCV(estimator=RFS, param_grid=params, cv=5)
+grid_search.fit(xtrain, ytrain)
+best_rfs = grid_search.best_estimator_
+print("Best parametrs of RFS", grid_search.best_params_)
+print(f"Random Forest Classifier,  roc_auc_score = {roc_auc_score(ytest, best_rfs.predict(xtest))}", "\n")
+
+
 
