@@ -20,7 +20,7 @@ from datetime import datetime
 from sklearn.model_selection import GridSearchCV
 
 
-data = pd.read_csv("/home/malek1t/ML.-KAGGLE/predict_car_plates_prices/data/train.csv", index_col=False)
+data = pd.read_csv("C:/Users/lenovo/Malekwhat/ML.-KAGGLE/predict_car_plates_prices/data/train.csv", index_col=False)
 current_data = datetime.now()
 
 
@@ -33,6 +33,251 @@ data["date"] = data["date"].apply(data_transform)
 
 data = data.loc[data.groupby("plate")["date"].idxmin()]
 
+# ((letters, numbers range (from, to), region code)
+#is it forbidden to buy (bool), do they have an advantage on the road (bool), level of significance (author's opinion))
+GOVERNMENT_CODES = {
+    # Moscow
+    ("AMP", (0, 999), "97"): ("Government of Russia", 1, 1, 10),
+    ("AMP", (0, 999), "77"): ("Partially Government of Russia", 0, 1, 8),
+    ("EKX", (0, 999), "77"): ("Partially Federal Protective Service (Federal Protective Service)", 0, 1, 6),
+    ("EKX", (0, 999), "97"): ("Partially Federal Protective Service (Federal Protective Service)", 0, 1, 6),
+    ("EKX", (0, 999), "99"): ("Partially Federal Protective Service (Federal Protective Service)", 0, 1, 6),
+    ("KKX", (0, 999), "77"): ("Partially used on vehicles of Ministry of Security/Federal Counterintelligence Service /Federal Security Service of Russia", 0, 0, 1),
+    ("CAC", (500, 999), "77"): ("Former officially 'open' plates of Ministry of Security/Federal Counterintelligence Service /Federal Security Service of Russia", 0, 0, 1),
+    ("CAC", (500, 999), "77"): ("Former officially 'open' plates of Ministry of Security/Federal Counterintelligence Service /Federal Security Service of Russia", 0, 0, 1),
+    ("AOO", (0, 999), "77"): ("Partially Presidential Administrative Directorate plates", 0, 1, 6),
+    ("BOO", (0, 999), "77"): ("Partially Presidential Administrative Directorate plates", 0, 1, 6),
+    ("MOO", (0, 999), "77"): ("Partially Presidential Administrative Directorate plates", 0, 1, 6),
+    ("COO", (0, 999), "77"): ("Partially Administrative Directorate, Federation Council plates", 0, 1, 6),
+    ("AMM", (0, 999), "99"): ("Partially plates of Moscow City Duma deputies, police", 0, 1, 4),
+    ("CCC", (0, 999), "77"): ("Partially Central Special Communication, Courier Service, Ministry of Communications", 0, 1, 3),
+    ("CCC", (0, 999), "99"): ("Partially Tax Police, Customs, Special Communications", 0, 1, 3),
+    ("CCC", (0, 999), "97"): ("Partially Central Special Communication, Courier Service, Ministry of Communications", 0, 1, 3),
+    ("KKK", (0, 999), "99"): ("Initially belonged to Courier Service, now used among private individuals", 0, 0, 1),
+    ("OOO", (0, 999), "77"): ("Initially intended for Federal Security Service", 0, 0, 1),
+    ("KMM", (0, 999), "77"): ("Partially Fire Department plates", 0, 1, 3),
+    ("MMP", (300, 320), "77"): ("Partially Federal Security Service plates", 0, 1, 4),
+    ("MMP", (0, 299), "77"): ("Partially Government of Russia, Federal Security Service, banks, and private individuals with connections in the traffic police", 0, 1, 2),
+    ("MMP", (321, 999), "77"): ("Partially Government of Russia, Federal Security Service, banks, and private individuals with connections in the traffic police", 0, 1, 2),
+    ("PMP", (0, 999), "77"): ("Partially Ministry of Justice plates", 0, 1, 3),
+    ("AMO", (0, 999), "77"): ("Partially Moscow City Hall plates", 0, 1, 5),
+    ("KOO", (0, 999), "77"): ("Partially Constitutional Court plates", 0, 1, 3),
+    ("EPE", (0, 999), "77"): ("Partially State Duma plates", 0, 1, 3),
+    ("AAA", (0, 999), "77"): ("Partially Administration of the President plates", 0, 1, 6),
+    ("KMP", (0, 999), "77"): ("Partially Government of Russia plates", 0, 1, 3),
+    ("TMP", (0, 999), "77"): ("Partially Government of Russia plates, as well as private individuals with connections in the traffic police", 0, 1, 2),
+    ("YMP", (0, 999), "77"): ("Partially Government of Russia plates, as well as private individuals with connections in the traffic police", 0, 1, 2),
+    ("XXX", (0, 999), "77"): ("Private individuals with connections in the traffic police", 0, 1, 2),
+    ("YYY", (0, 999), "77"): ("Private individuals with connections in the traffic police", 0, 1, 2),
+    ("XKX", (0, 999), "77"): ("Partially Federal Security Service and Federal Protective Service plates", 0, 1, 2),
+    ("OMP", (0, 999), "77"): ("Partially Government of Russia, banks, and private individuals with connections in the traffic police", 0, 1, 2),
+    ("EEE", (0, 999), "77"): ("Private individuals with connections in the traffic police", 0, 1, 2),
+
+    # Moscow Oblast
+    ("AMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("BMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("KMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("CMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("OMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("MMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("TMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("HMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("YMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("XMO", (0, 999), "50"): ("Partially various government agencies (administration, ambulance, traffic police, etc.)", 0, 1, 3),
+    ("AMM", (0, 999), "50"): ("Partially plates of the regional administration", 0, 1, 5),
+    ("AMM", (0, 999), "90"): ("Partially plates of the regional administration", 0, 1, 5),
+    ("MMM", (0, 999), "50"): ("Partially plates of law enforcement in the region (prosecutor's office, EMERCOM, traffic police, etc.)", 0, 1, 5),
+    ("MMM", (0, 999), "90"): ("Partially plates of law enforcement in the region (prosecutor's office, EMERCOM, traffic police, etc.)", 0, 1, 5),
+
+    # Saint Petersburg
+    ("OBO", (0, 999), "78"): ("Partially Departmental Security Service plates", 0, 1, 4),
+    ("OBO", (0, 999), "98"): ("Partially Departmental Security Service plates", 0, 1, 4),
+    ("OTT", (0, 999), "78"): ("Partially former traffic police plates (now replaced by 98)", 0, 0, 1),
+    ("OTT", (0, 999), "98"): ("Partially traffic police plates", 0, 1, 4),
+    ("OMM", (0, 999), "78"): ("Partially city district police plates", 0, 1, 3),
+    ("OMM", (0, 999), "98"): ("Partially city district police plates", 0, 1, 3),
+    ("OOM", (0, 999), "78"): ("Partially plates of the Main Department of Internal Affairs", 0, 1, 3),
+    ("OOM", (0, 999), "98"): ("Partially plates of the Main Department of Internal Affairs", 0, 1, 3),
+    ("OKO", (0, 100), "78"): ("Partially former plates of the prosecutor's office and judicial department (now replaced by 98)", 0, 0, 1),
+    ("OKO", (0, 100), "98"): ("Partially plates of the prosecutor's office and judicial department", 0, 1, 3),
+    ("OKO", (700, 999), "78"): ("Partially former Federal Security Service plates (now replaced by 98)", 0, 0, 1),
+    ("OKO", (700, 999), "98"): ("Partially Federal Security Service plates", 0, 1, 3),
+    ("OPP", (0, 999), "78"): ("Partially former plates of the Main Department of Internal Affairs (now replaced by 98)", 0, 0, 1),
+    ("OPP", (0, 999), "98"): ("Partially plates of the Main Department of Internal Affairs", 0, 1, 3),
+    ("OOH", (0, 999), "78"): ("Partially Federal Drug Control Service and Federal Tax Service plates", 0, 1, 3),
+    ("OOH", (0, 999), "98"): ("Partially Federal Drug Control Service and Federal Tax Service plates", 0, 1, 3),
+    ("OAO", (0, 999), "78"): ("Partially plates of the city and regional administration", 0, 1, 5),
+    ("OAO", (0, 999), "98"): ("Partially plates of the city and regional administration", 0, 1, 5),
+    ("AAA", (0, 100), "78"): ("Partially plates of the city and regional administration", 0, 1, 6),
+    ("AAA", (0, 100), "98"): ("Partially plates of the city and regional administration", 0, 1, 6),
+    ("OOO", (0, 899), "78"): ("Commercial plates", 0, 0, 2),
+    ("OOO", (0, 899), "98"): ("Commercial plates", 0, 0, 2),
+    ("OOO", (900, 999), "78"): ("Partially Federal Protective Service plates", 0, 1, 3),
+    ("OOO", (900, 999), "98"): ("Partially Federal Protective Service plates", 0, 1, 3),
+    ("OKC", (0, 999), "98"): ("Partially Constitutional Court of the Russian Federation plates", 0, 1, 3),
+    ("OOC", (0, 999), "78"): ("Partially plates of heads of enterprises and organizations", 0, 0, 2),
+    ("OOC", (0, 999), "98"): ("Partially plates of heads of enterprises and organizations", 0, 0, 2),
+    ("MMM", (0, 999), "78"): ("Commercial plates", 0, 0, 2),
+    ("MMM", (0, 999), "98"): ("Commercial plates", 0, 0, 2),
+
+    # Altai Republic
+    ("XXX", (0, 999), "04"): ("Widespread 'special' plates", 0, 0, 2),
+    ("TTT", (0, 999), "04"): ("Rare 'special' plates", 0, 0, 2),
+    ("PPP", (0, 999), "04"): ("Partially prosecutor's office of the republic", 0, 1, 3),
+    ("PPA", (0, 999), "04"): ("Partially prosecutor's office of the republic", 0, 1, 3),
+    ("MPA", (0, 999), "04"): ("Partially Ministry of Internal Affairs of the republic", 0, 1, 3),
+    ("OOO", (0, 999), "04"): ("Partially plates of the government of the republic", 0, 1, 5),
+    ("HHH", (0, 999), "04"): ("Partially the republic's tax service plates", 0, 1, 3),
+    ("CCC", (0, 999), "04"): ("Partially plates belonging to the republic's judges", 0, 1, 3),
+
+    # Republic of Bashkortostan
+    ("PKC", (0, 999), "02"): ("Partially State Assembly (Kurultai) plates", 0, 1, 5),
+    ("KKC", (0, 999), "02"): ("Partially State Assembly (Kurultai) plates", 0, 1, 5),
+    ("OOO", (0, 999), "02"): ("Partially plates of leaders of large enterprises and ministries", 0, 1, 3),
+    ("AAA", (0, 999), "02"): ("Partially plates of the republic's government", 0, 1, 5),
+
+    # Republic of Karelia
+    ("TTT", (0, 999), "10"): ("Partially government of the republic and Federal Security Service plates", 0, 1, 5),
+    ("HHH", (0, 999), "10"): ("Partially plates of city and district administrations of the republic", 0, 1, 4),
+    ("MMM", (0, 999), "10"): ("Partially plates of the Ministry of Internal Affairs of the republic", 0, 1, 3),
+    ("EMP", (0, 999), "10"): ("Partially plates of the Ministry of Internal Affairs of the republic", 0, 1, 3),
+    ("CCC", (0, 999), "10"): ("Partially plates of the prosecutor's office and judges' vehicles", 0, 1, 3),
+
+    # Komi Republic
+    ("TTT", (0, 999), "11"): ("Partially government of the republic and Federal Security Service plates", 0, 1, 5),
+    ("OOO", (0, 999), "11"): ("Widespread semi-special plates, leaders of large industrial companies", 0, 1, 3),
+
+    # Sakha Republic
+    ("PPP", (0, 999), "14"): ("Partially plates of the republic's prosecutor's office", 0, 1, 3),
+    ("AAA", (0, 999), "14"): ("Motor pool of the President, Government, Parliament of the republic, as well as heads of state enterprises", 0, 1, 5),
+
+    # Republic of Tatarstan
+    ("OAA", (0, 999), "16"): ("Partially plates of heads of district administrations", 0, 1, 5),
+    ("OAA", (0, 999), "116"): ("Partially plates of heads of district administrations", 0, 1, 5),
+    ("OAA", (0, 999), "716"): ("Partially plates of heads of district administrations", 0, 1, 5),
+
+    # Krasnodar Krai
+    ("PPP", (0, 999), "23"): ("Partially plates of the Krai and city administrations", 0, 1, 5),
+    ("HHH", (0, 999), "23"): ("Partially plates of the tax authorities", 0, 1, 3),
+    ("OOO", (0, 999), "23"): ("Partially plates of the Krai and city administrations", 0, 1, 5),
+    ("KKK", (0, 999), "23"): ("Partially plates of the Krai administration", 0, 1, 5),
+
+    # Krasnoyarsk Krai
+    ("KPK", (0, 999), "24"): ("Partially plates of the Krai administration", 0, 1, 5),
+    ("OOO", (0, 999), "24"): ("Partially Federal Security Service plates of the Krai", 0, 1, 3),
+    ("MKK", (0, 999), "24"): ("Partially former plates of the Ministry of Internal Affairs of the Krai", 0, 0, 1),
+
+    # Primorsky Krai
+    ("BOO", (0, 999), "25"): ("Partially military plates", 0, 1, 3),
+    ("BOO", (0, 999), "125"): ("Partially city services plates in Vladivostok and districts", 0, 1, 2),
+    ("AAA", (0, 999), "25"): ("Issued first in Vladivostok", 0, 0, 2),
+    ("AAA", (0, 999), "125"): ("One of the most 'special' series, prosecutor's office", 1, 1, 5),
+    ("HHH", (0, 999), "25"): ("Partially plates of the administration and vehicles of City Duma deputies", 0, 1, 3),
+    ("MMM", (0, 999), "25"): ("Partially plates of the deputies of the Krai Legislative Assembly", 0, 1, 3),
+    ("CCC", (0, 999), "25"): ("Partially plates of the Krai administration", 0, 1, 5),
+    ("XXX", (0, 999), "25"): ("Partially plates of the prosecutor's office and the Department of Internal Affairs", 0, 1, 2),
+    ("OOO", (0, 999), "25"): ("Partially former plates of the Krai administration (during Governor Evgeny Nazdratenko)", 0, 0, 1),
+    ("TTT", (0, 999), "25"): ("Partially former plates of the Vladivostok administration and federal agencies in the Krai (during Mayor Yuri Kopylov)", 0, 0, 1),
+    ("MBK", (0, 999), "25"): ("Partially plates for employees of the Department of Internal Affairs", 0, 1, 3),
+    ("MBK", (0, 999), "125"): ("Partially plates for employees of the Department of Internal Affairs", 0, 1, 3),
+    ("MOO", (0, 999), "25"): ("Partially plates for Krai agencies of the Department of Internal Affairs, EMERCOM, firefighters, etc.", 0, 1, 2),
+    ("MOO", (0, 999), "125"): ("Partially plates for Krai agencies of the Department of Internal Affairs, EMERCOM, firefighters, etc.", 0, 1, 2),
+    ("HOO", (0, 999), "25"): ("Partially plates of the Department of Internal Affairs, traffic police in the southeastern region of the Krai (Nakhodka)", 0, 1, 3),
+    ("HOO", (0, 999), "125"): ("Partially plates of the Department of Internal Affairs, traffic police in the southeastern region of the Krai (Nakhodka)", 0, 1, 3),
+    ("YOO", (0, 999), "25"): ("Partially plates of the Department of Internal Affairs, traffic police in the central region of the Krai (Ussuriysk)", 0, 1, 3),
+    ("YOO", (0, 999), "125"): ("Partially plates of the Department of Internal Affairs, traffic police in the central region of the Krai (Ussuriysk)", 0, 1, 3),
+    ("COO", (0, 999), "25"): ("Partially plates of the Department of Internal Affairs, traffic police in the northern region of the Krai (Spassk-Dalny)", 0, 1, 3),
+    ("COO", (0, 999), "125"): ("Partially plates of the Department of Internal Affairs, traffic police in the northern region of the Krai (Spassk-Dalny)", 0, 1, 3),
+
+    # Vologda Oblast
+    ("AAA", (0, 999), "35"): ("Partially plates of the regional government and Vologda city administration", 0, 1, 5),
+
+    # Volgograd Oblast
+    ("AAM", (0, 999), "34"): ("Partially plates of the Oblast Duma", 0, 1, 3),
+    ("PAA", (0, 999), "34"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("AAA", (0, 999), "34"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+    ("ACK", (0, 999), "34"): ("Partially plates of the Investigative Committee, Main Department of Internal Affairs", 0, 1, 3),
+    ("YYY", (0, 999), "34"): ("Partially Federal Security Service plates", 0, 1, 3),
+    ("AAK", (0, 999), "34"): ("Partially plates of the Federal Bailiff Service, Ministry of Justice, and Judicial Department", 0, 1, 3),
+
+    # Voronezh Oblast
+    ("ААА", (0, 999), "36"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("BOA", (0, 999), "36"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("MMM", (0, 999), "36"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+
+    # Kaliningrad Oblast
+    ("AAK", (0, 999), "39"): ("Partially plates of the Oblast Administration, Federal Security Service, and Prosecutor's Office", 0, 1, 5),
+    ("KKK", (0, 999), "39"): ("Partially plates of the Oblast Administration, Federal Security Service, and Prosecutor's Office", 0, 1, 5),
+    ("PPP", (0, 999), "39"): ("Partially former plates of the Oblast Administration (during Governor Boos)", 0, 0, 1),
+
+    # Kaluga Oblast
+    ("OOO", (0, 999), "40"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("TTT", (0, 999), "40"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("PPP", (0, 999), "40"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+
+    # Kurgan Oblast
+    ("OOO", (0, 999), "45"): ("Partially former plates of the Oblast Administration", 0, 0, 1),
+    ("TTT", (0, 999), "45"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("OKO", (0, 999), "45"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+
+    # Novosibirsk Oblast
+    ("AAA", (0, 199), "54"): ("Plates for Presidential Plenipotentiaries", 1, 1, 7),
+    ("AAA", (200, 999), "54"): ("'Special' plates", 0, 1, 4),
+    ("HHH", (0, 999), "54"): ("Partially plates of the Novosibirsk mayor's office, Oblast Administration, and Oblast Council", 0, 1, 5),
+    ("ACK", (0, 999), "54"): ("Partially Federal Security Service plates of the Oblast", 0, 1, 3),
+    ("AHO", (0, 999), "54"): ("Partially former plates of the Oblast Administration", 0, 0, 1),
+    ("AAO", (0, 999), "54"): ("Partially plates of various government agencies, including district administrations of Novosibirsk", 0, 1, 3),
+    ("PPP", (0, 999), "54"): ("'Morozov' plates (introduced by former head of traffic police Pyotr Morozov)", 0, 1, 2),
+    ("MOP", (0, 999), "54"): ("'Morozov' plates (introduced by former head of traffic police Pyotr Morozov)", 0, 1, 2),
+
+    # Oryol Oblast
+    ("AAA", (0, 999), "57"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("AOO", (0, 999), "57"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("OAO", (0, 999), "57"): ("Partially plates of directors of public joint-stock companies", 0, 1, 2),
+
+    # Rostov Oblast
+    ("APO", (0, 999), "61"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("AAA", (0, 999), "61"): ("Partially plates of district heads of Rostov-on-Don, mayors of Oblast cities", 0, 1, 5),
+    ("APY", (0, 999), "61"): ("Partially plates of the Rostov-on-Don administration", 0, 1, 5),
+    ("KKK", (0, 999), "61"): ("Partially former plates for Presidential Plenipotentiaries (during Viktor Kazantsev)", 0, 0, 1),
+    ("HHH", (0, 999), "61"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+    ("MMM", (0, 999), "61"): ("Partially plates of the Oblast Department of Internal Affairs", 0, 1, 3),
+    ("OOO", (0, 999), "61"): ("Partially plates of the Oblast Legislative Assembly", 0, 1, 4),
+    ("BBK", (0, 999), "61"): ("Partially plates of insurance companies in Rostov-on-Don", 0, 1, 1),
+
+    # Saratov Oblast
+    ("AAA", (0, 999), "164"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("PPP", (0, 999), "164"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("XXX", (0, 999), "64"): ("Partially plates of the Oblast courts", 0, 1, 3),
+    ("MMM", (0, 999), "64"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+    ("OAA", (0, 999), "64"): ("Partially Federal Security Service plates of the Oblast", 0, 1, 3),
+
+    # Tomsk Oblast
+    ("ATO", (0, 999), "70"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+
+    # Tyumen Oblast
+    ("ATO", (0, 999), "72"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("PTO", (0, 999), "72"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("MTO", (0, 999), "72"): ("Partially plates of the Oblast Prosecutor's Office", 0, 1, 3),
+    ("HTO", (0, 999), "72"): ("Partially plates of the Tax Service", 0, 1, 3),
+    ("CTO", (0, 999), "72"): ("Partially plates of the Oblast courts", 0, 1, 3),
+    ("YTO", (0, 999), "72"): ("Partially plates of the bailiff service", 0, 1, 3),
+    ("BAA", (0, 999), "72"): ("Partially plates of the Oblast Ministry of Internal Affairs", 0, 1, 3),
+    ("KKK", (0, 999), "72"): ("'Gangster' plates", 0, 1, 1),
+
+    # Arkhangelsk Oblast
+    ("TTT", (0, 999), "29"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("PPP", (0, 999), "29"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("MAO", (0, 999), "29"): ("Partially plates of the Oblast Ministry of Internal Affairs", 0, 1, 3),
+
+    # Ryazan Oblast
+    ("APO", (0, 999), "62"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+
+    # Samara Oblast
+    ("PAA", (0, 999), "63"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+    ("AAP", (0, 999), "63"): ("Partially plates of the Oblast Administration", 0, 1, 5),
+}
+
 
 data["Triplet_letters"] = 0
 data["Double_letters"] = 0
@@ -43,8 +288,24 @@ data["Quartet_number"] = 0
 data["Triplet_numbers"] = 0
 data["Doublet_numbers"] = 0
 data["Singlet_numbers"] = 0
+data["AbilityToBuy"] = 0
+data["AdventagesOnRoad"] = 0
+data["LevelSign"] = 0
 
 for index, plate_in in data[["id", "plate"]].iterrows():
+    plate = plate_in["plate"]
+    letter_part = plate[0] + plate[4:6]
+    number_part = plate[1:4]
+    reg_part = plate[6:]
+
+    for key in GOVERNMENT_CODES.keys():
+      gov_let, gov_num, gov_reg = key
+
+      if (letter_part == gov_let) and (gov_num[0] <= int(number_part) <= gov_num[1]) and reg_part == gov_reg:
+          data.loc[index, "AbilityToBuy"] = GOVERNMENT_CODES[key][1]
+          data.loc[index, "AdventagesOnRoad"] = GOVERNMENT_CODES[key][2]
+          data.loc[index, "LevelSign"] = GOVERNMENT_CODES[key][3]
+
     letter_count = {}
     number_count = {}
 
@@ -100,8 +361,24 @@ test_data["Quartet_number"] = 0
 test_data["Triplet_numbers"] = 0
 test_data["Doublet_numbers"] = 0
 test_data["Singlet_numbers"] = 0
+test_data["AbilityToBuy"] = 0
+test_data["AdventagesOnRoad"] = 0
+test_data["LevelSign"] = 0
 
 for index, plate_in in enumerate(test_data["plate"]):
+    plate = plate_in["plate"]
+    letter_part = plate[0] + plate[4:6]
+    number_part = plate[1:4]
+    reg_part = plate[6:]
+
+    for key in GOVERNMENT_CODES.keys():
+      gov_let, gov_num, gov_reg = key
+
+      if (letter_part == gov_let) and (gov_num[0] <= int(number_part) <= gov_num[1]) and reg_part == gov_reg:
+          data.loc[index, "AbilityToBuy"] = GOVERNMENT_CODES[key][1]
+          data.loc[index, "AdventagesOnRoad"] = GOVERNMENT_CODES[key][2]
+          data.loc[index, "LevelSign"] = GOVERNMENT_CODES[key][3]
+
     letter_count = {}
     number_count = {}
 
